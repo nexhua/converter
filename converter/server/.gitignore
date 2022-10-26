@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Exclude Files ###
+/src/main/java/com/converter/server/constants/SpotifyApplicationConstants.java
