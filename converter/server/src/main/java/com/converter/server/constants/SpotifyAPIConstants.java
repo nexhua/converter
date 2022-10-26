@@ -25,9 +25,13 @@ public class SpotifyAPIConstants {
 
     public static final String spotify_auth_base = "https://accounts.spotify.com";
 
+    public static final String spotify_api_base = "https://api.spotify.com/v1";
+
     public static final String authorize_path = "/authorize";
 
     public static final String api_token_path = "/api/token";
+
+    public static final String current_user_playlist_path = "/me/playlists";
 
     //endregion
 

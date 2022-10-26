@@ -2,7 +2,11 @@ package com.converter.server.client;
 
 import com.converter.server.constants.SpotifyAPIConstants;
 import com.converter.server.constants.SpotifyApplicationConstants;
+import com.converter.server.entities.spotify.SpotifyPlaylist;
+import com.converter.server.entities.spotify.SpotifyPlaylists;
+import com.converter.server.services.ClientIDService;
 import com.converter.server.tokens.SpotifyTokens;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
@@ -15,6 +19,9 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 
 public class BaseWebClient {
+
+    @Autowired
+    private ClientIDService clientIDService;
 
     private static final WebClient client = WebClient.create();
 
@@ -41,5 +48,34 @@ public class BaseWebClient {
                 .bodyToMono(SpotifyTokens.class);
 
         return tokensMono.share().block();
+    }
+
+    public static SpotifyPlaylists getUsersPlaylist(SpotifyTokens tokens) {
+
+        URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_api_base)
+                .path(SpotifyAPIConstants.current_user_playlist_path).build().toUri();
+
+
+        SpotifyPlaylists playlists = client.get()
+                .uri(uri)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header(HttpHeaders.AUTHORIZATION, tokens.toBearerTokenString())
+                .retrieve()
+                .bodyToMono(SpotifyPlaylists.class)
+                .block();
+
+        return playlists;
+    }
+
+    public static SpotifyPlaylist getSpotifyPlaylist(SpotifyTokens tokens, String href) {
+        SpotifyPlaylist playlist = client.get()
+                .uri(href)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header(HttpHeaders.AUTHORIZATION, tokens.toBearerTokenString())
+                .retrieve()
+                .bodyToMono(SpotifyPlaylist.class)
+                .block();
+
+        return playlist;
     }
 }

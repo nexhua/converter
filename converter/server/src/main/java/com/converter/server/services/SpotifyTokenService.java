@@ -5,21 +5,33 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class SpotifyTokenService {
 
-    Map<String, SpotifyTokens> spotifySessionTokens = new HashMap<>();
+    private Map<String, SpotifyTokens> spotifySessionTokens = new HashMap<>();
 
     public SpotifyTokenService(Map<String, SpotifyTokens> spotifySessionTokens) {
         this.spotifySessionTokens = spotifySessionTokens;
     }
 
-    public Map<String, SpotifyTokens> getSpotifySessionTokens() {
-        return spotifySessionTokens;
+    public void add(String sessionID, SpotifyTokens token) {
+        this.spotifySessionTokens.put(sessionID, token);
     }
 
-    public void setSpotifySessionTokens(Map<String, SpotifyTokens> spotifySessionTokens) {
-        this.spotifySessionTokens = spotifySessionTokens;
+    public SpotifyTokens find(String sessionID) {
+        return this.spotifySessionTokens.get(sessionID);
+    }
+
+    public Optional<SpotifyTokens> findOptional(String sessionID) {
+        SpotifyTokens tokens = this.spotifySessionTokens.get(sessionID);
+
+        if(tokens != null) {
+            return Optional.of(tokens);
+        }
+        else {
+            return Optional.empty();
+        }
     }
 }

@@ -4,21 +4,26 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class ClientIDService {
 
-    Map<String, String> sessionIDs = new HashMap<>();
+    private Map<String, String> sessionIDs = new HashMap<>();
 
     public ClientIDService(Map<String, String> sessionIDs) {
         this.sessionIDs = sessionIDs;
     }
 
-    public Map<String, String> getSessionIDs() {
-        return sessionIDs;
+    public void putSession(String sessionID, String state) {
+        this.sessionIDs.put(sessionID,state);
     }
 
-    public void setSessionIDs(Map<String, String> sessionIDs) {
-        this.sessionIDs = sessionIDs;
+    public String findSession(String sessionID) {
+        return this.sessionIDs.get(sessionID);
+    }
+
+    public void removeSession(String sessionID) {
+        this.sessionIDs.remove(sessionID);
     }
 }

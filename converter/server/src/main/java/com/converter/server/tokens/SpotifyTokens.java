@@ -66,4 +66,8 @@ public class SpotifyTokens {
 
 
     //endregion
+
+    public String toBearerTokenString() {
+        return "Bearer " + this.access_token;
+    }
 }

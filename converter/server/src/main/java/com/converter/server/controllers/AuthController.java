@@ -54,7 +54,7 @@ public class AuthController {
         headers.add(HttpHeaders.SET_COOKIE, "SESSIONID="+sessionID+"; Path=/");
         headers.add(HttpHeaders.LOCATION, uri.toString());
 
-        this.clientIDService.getSessionIDs().put(sessionID, state);
+        this.clientIDService.putSession(sessionID, state);
 
        return new ResponseEntity(headers, HttpStatus.MOVED_PERMANENTLY);
 
@@ -68,7 +68,7 @@ public class AuthController {
         if(!sessionCookie.isEmpty()) {
             String sessionID = sessionCookie.get().getValue();
 
-            String state1 = this.clientIDService.getSessionIDs().get(sessionID);
+            String state1 = this.clientIDService.findSession(sessionID);
 
             if(state == null) {
                 //If there is no state that is matched with the session id
@@ -83,7 +83,7 @@ public class AuthController {
                     SpotifyTokens tokens = BaseWebClient.getSpotifyTokens(code);
 
                     if(tokens != null) {
-                        this.spotifyTokenService.getSpotifySessionTokens().put(sessionID, tokens);
+                        this.spotifyTokenService.add(sessionID, tokens);
                         return new ResponseEntity<>(tokens, HttpStatus.OK);
                     }
                     else {
@@ -95,7 +95,7 @@ public class AuthController {
                 }
             }
             else {
-                this.clientIDService.getSessionIDs().remove(sessionID);
+                this.clientIDService.removeSession(sessionID);
                 //If state send for authorization code is not the same with the request state
                 return ResponseEntity.badRequest().build();
             }
