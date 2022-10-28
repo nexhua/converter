@@ -6,7 +6,7 @@ public class SpotifyTracks   {
 
     private String href;
 
-    private ArrayList<SpotifyTrack> items;
+    private ArrayList<SpotifyTrackWrapper> items;
 
     public SpotifyTracks() {
     }
@@ -21,11 +21,11 @@ public class SpotifyTracks   {
         this.href = href;
     }
 
-    public ArrayList<SpotifyTrack> getItems() {
+    public ArrayList<SpotifyTrackWrapper> getItems() {
         return items;
     }
 
-    public void setItems(ArrayList<SpotifyTrack> items) {
+    public void setItems(ArrayList<SpotifyTrackWrapper> items) {
         this.items = items;
     }
 

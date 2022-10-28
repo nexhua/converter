@@ -50,7 +50,7 @@ public class BaseWebClient {
         return tokensMono.share().block();
     }
 
-    public static SpotifyPlaylists getUsersPlaylist(SpotifyTokens tokens) {
+    public static SpotifyPlaylists getUserPlaylists(SpotifyTokens tokens) {
 
         URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_api_base)
                 .path(SpotifyAPIConstants.current_user_playlist_path).build().toUri();
@@ -67,9 +67,14 @@ public class BaseWebClient {
         return playlists;
     }
 
-    public static SpotifyPlaylist getSpotifyPlaylist(SpotifyTokens tokens, String href) {
+    public static SpotifyPlaylist getUserPlaylist(SpotifyTokens tokens, String playlistID) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_api_base)
+                .path("/playlists")
+                .path("/" + playlistID)
+                .queryParam("fields", "href,id,name,images,tracks(href),tracks.items(track(href,name,id))").build().toUri();
+
         SpotifyPlaylist playlist = client.get()
-                .uri(href)
+                .uri(uri)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header(HttpHeaders.AUTHORIZATION, tokens.toBearerTokenString())
                 .retrieve()
