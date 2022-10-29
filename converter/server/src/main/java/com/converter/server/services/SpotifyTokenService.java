@@ -12,9 +12,26 @@ public class SpotifyTokenService {
 
     private Map<String, SpotifyTokens> spotifySessionTokens = new HashMap<>();
 
+
+    public SpotifyTokenService() {
+    }
+
     public SpotifyTokenService(Map<String, SpotifyTokens> spotifySessionTokens) {
         this.spotifySessionTokens = spotifySessionTokens;
     }
+
+    //region
+
+    public Map<String, SpotifyTokens> getSpotifySessionTokens() {
+        return spotifySessionTokens;
+    }
+
+    public void setSpotifySessionTokens(Map<String, SpotifyTokens> spotifySessionTokens) {
+        this.spotifySessionTokens = spotifySessionTokens;
+    }
+
+
+    //endregion
 
     public void add(String sessionID, SpotifyTokens token) {
         this.spotifySessionTokens.put(sessionID, token);

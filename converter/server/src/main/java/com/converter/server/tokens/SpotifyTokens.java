@@ -1,5 +1,8 @@
 package com.converter.server.tokens;
 
+import java.util.Calendar;
+import java.util.Date;
+
 public class SpotifyTokens {
     private String access_token;
 
@@ -10,6 +13,8 @@ public class SpotifyTokens {
     private String scope;
 
     private Integer expires_in;
+
+    private Calendar tokenExpireDate;
 
     public SpotifyTokens() {
     }
@@ -62,12 +67,37 @@ public class SpotifyTokens {
 
     public void setExpires_in(Integer expires_in) {
         this.expires_in = expires_in;
+
+        this.tokenExpireDate = Calendar.getInstance();
+        this.tokenExpireDate.add(Calendar.SECOND, this.expires_in);
     }
 
+    public Calendar getTokenExpireDate() {
+        return tokenExpireDate;
+    }
+
+    public void setTokenExpireDate(Calendar tokenExpireDate) {
+        this.tokenExpireDate = tokenExpireDate;
+    }
 
     //endregion
 
     public String toBearerTokenString() {
         return "Bearer " + this.access_token;
+    }
+
+    public boolean shouldRefreshToken() {
+        if(this.tokenExpireDate != null) {
+            return this.tokenExpireDate.compareTo(Calendar.getInstance()) <= 0;
+        }
+
+        return false;
+    }
+
+    public void updateToken(SpotifyTokens tokens) {
+        this.setAccess_token(tokens.getAccess_token());
+        this.setToken_type(tokens.getToken_type());
+        this.setScope(tokens.getScope());
+        this.setExpires_in(tokens.getExpires_in());
     }
 }

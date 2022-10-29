@@ -20,6 +20,8 @@ public class SpotifyAPIConstants {
 
     public static final String authorization_code = "authorization_code";
 
+    public static final String refresh_token = "refresh_token";
+
 
     //Spotify URLs
 

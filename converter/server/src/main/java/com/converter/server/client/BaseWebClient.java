@@ -83,4 +83,27 @@ public class BaseWebClient {
 
         return playlist;
     }
+
+    public static boolean refreshSpotifyTokens(String sessionID, SpotifyTokens tokens) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_auth_base)
+                .path(SpotifyAPIConstants.api_token_path).build().toUri();
+
+        MultiValueMap<String, String> bodyValues = new LinkedMultiValueMap<>();
+
+        bodyValues.add(SpotifyAPIConstants.refresh_token, tokens.getRefresh_token());
+        bodyValues.add(SpotifyAPIConstants.grant_type, SpotifyAPIConstants.refresh_token);
+
+
+        SpotifyTokens refreshedToken = client.post()
+                .uri(uri)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .header(HttpHeaders.AUTHORIZATION, SpotifyApplicationConstants.getEncodedAuthString())
+                .body(BodyInserters.fromFormData(bodyValues))
+                .retrieve()
+                .bodyToMono(SpotifyTokens.class)
+                .block();
+
+        tokens.updateToken(refreshedToken);
+        return true;
+    }
 }
