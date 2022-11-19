@@ -80,11 +80,11 @@ public class AuthController {
                 String code1 = request.getParameter(SpotifyAPIConstants.code);
                 if(code != null) {
 
-                    SpotifyTokens tokens = BaseWebClient.getSpotifyTokens(code);
+                    Optional<SpotifyTokens> optionalTokens = BaseWebClient.getSpotifyTokens(code);
 
-                    if(tokens != null) {
-                        this.spotifyTokenService.add(sessionID, tokens);
-                        return new ResponseEntity<>(tokens, HttpStatus.OK);
+                    if(optionalTokens.isPresent()) {
+                        this.spotifyTokenService.add(sessionID, optionalTokens.get());
+                        return new ResponseEntity<>(optionalTokens.get(), HttpStatus.OK);
                     }
                     else {
                         new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -102,6 +102,6 @@ public class AuthController {
         }
 
         //If request does not have SESSIONID cookie
-        return ResponseEntity.badRequest().build();
+        return ResponseEntity.internalServerError().build();
     }
 }

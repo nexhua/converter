@@ -35,13 +35,17 @@ public class SpotifyController {
             if (tokensOptional.isPresent()) {
                 SpotifyTokens tokens = tokensOptional.get();
 
+                Optional<SpotifyPlaylists> playlists = BaseWebClient.getUserPlaylists(tokens);
 
-                SpotifyPlaylists playlists = BaseWebClient.getUserPlaylists(tokens);
-
-                return ResponseEntity.ok(playlists.getItems());
+                if(playlists.isPresent()) {
+                    return ResponseEntity.ok(playlists.get().getItems());
+                }
+                else{
+                    return ResponseEntity.badRequest().build();
+                }
             }
         }
-        return ResponseEntity.badRequest().build();
+        return ResponseEntity.internalServerError().build();
     }
 
     @GetMapping("/playlists/{playlistID}")
@@ -54,11 +58,16 @@ public class SpotifyController {
             if (tokensOptional.isPresent()) {
                 SpotifyTokens tokens = tokensOptional.get();
 
-                SpotifyPlaylist playlist = BaseWebClient.getUserPlaylist(tokens, playlistID);
+                Optional<SpotifyPlaylist> playlist = BaseWebClient.getUserPlaylist(tokens, playlistID);
 
-                return ResponseEntity.ok(playlist);
+                if(playlist.isPresent()){
+                    return ResponseEntity.ok(playlist.get());
+                }
+                else {
+                    return ResponseEntity.badRequest().build();
+                }
             }
         }
-        return ResponseEntity.badRequest().build();
+        return ResponseEntity.internalServerError().build();
     }
 }
