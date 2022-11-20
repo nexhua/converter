@@ -4,6 +4,7 @@ import com.converter.server.constants.SpotifyAPIConstants;
 import com.converter.server.constants.SpotifyApplicationConstants;
 import com.converter.server.entities.spotify.SpotifyPlaylist;
 import com.converter.server.entities.spotify.SpotifyPlaylists;
+import com.converter.server.entities.spotify.SpotifyTracks;
 import com.converter.server.exceptions.SpotifyResponseException;
 import com.converter.server.services.ClientIDService;
 import com.converter.server.tokens.SpotifyTokens;
@@ -69,10 +70,25 @@ public class BaseWebClient {
         return optionalSpotifyTokens;
     }
 
-    public static Optional<SpotifyPlaylists> getUserPlaylists(SpotifyTokens tokens) {
+    public static Optional<SpotifyPlaylists> getUserPlaylists(SpotifyTokens tokens, int limit, int offset) {
+
+        if(limit <= 0 ) {
+            limit = 10;
+        }
+
+        if(limit > 50) {
+            limit = 50;
+        }
+
+        if(offset < 0 ) {
+            offset = 0;
+        }
 
         URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_api_base)
-                .path(SpotifyAPIConstants.current_user_playlist_path).build().toUri();
+                .path(SpotifyAPIConstants.current_user_playlist_path)
+                .queryParam("limit", limit)
+                .queryParam("offset", offset)
+                .build().toUri();
 
         Optional<SpotifyPlaylists> optionalSpotifyPlaylists;
 
@@ -117,6 +133,41 @@ public class BaseWebClient {
                     .onStatus(HttpStatus::is4xxClientError, clientResponse -> clientResponse.bodyToMono(String.class).map(SpotifyResponseException::new))
                     .onStatus(HttpStatus::is5xxServerError, clientResponse -> clientResponse.bodyToMono(String.class).map(SpotifyResponseException::new))
                     .bodyToMono(SpotifyPlaylist.class)
+                    .block();
+
+            if (playlist != null) {
+                optionalSpotifyPlaylist = Optional.of(playlist);
+            } else {
+                optionalSpotifyPlaylist = Optional.empty();
+            }
+        } catch (NestedRuntimeException exception) {
+            optionalSpotifyPlaylist = Optional.empty();
+        }
+
+        return optionalSpotifyPlaylist;
+    }
+
+    public static Optional<SpotifyTracks> getPlaylistTracks(SpotifyTokens tokens, String playlistID, int limit, int offset) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_api_base)
+                .path("/playlists")
+                .path("/" + playlistID)
+                .path("/tracks")
+                .queryParam("limit", limit)
+                .queryParam("offset", offset)
+                .build().toUri();
+
+
+        Optional<SpotifyTracks> optionalSpotifyPlaylist;
+        try {
+
+            SpotifyTracks playlist = client.get()
+                    .uri(uri)
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .header(HttpHeaders.AUTHORIZATION, tokens.toBearerTokenString())
+                    .retrieve()
+                    .onStatus(HttpStatus::is4xxClientError, clientResponse -> clientResponse.bodyToMono(String.class).map(SpotifyResponseException::new))
+                    .onStatus(HttpStatus::is5xxServerError, clientResponse -> clientResponse.bodyToMono(String.class).map(SpotifyResponseException::new))
+                    .bodyToMono(SpotifyTracks.class)
                     .block();
 
             if (playlist != null) {
