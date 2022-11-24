@@ -9,6 +9,7 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -23,20 +24,20 @@ public class SpotifyTokenInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        Optional<Cookie> sessionCookie = Arrays.stream(request.getCookies()).filter(cookie -> cookie.getName().equals("SESSIONID")).findFirst();
+        HttpSession session = request.getSession();
 
-        if(sessionCookie.isPresent()) {
-            Optional<SpotifyTokens> optionalTokens = this.spotifyTokenService.findOptional(sessionCookie.get().getValue());
 
-            if(optionalTokens.isPresent()) {
-                SpotifyTokens tokens = optionalTokens.get();
+        Optional<SpotifyTokens> optionalTokens = this.spotifyTokenService.findOptional(session.getId());
 
-                if(tokens.shouldRefreshToken()) {
-                    //refresh token
-                    return BaseWebClient.refreshSpotifyTokens(sessionCookie.get().getValue(), tokens);
-                }
+        if (optionalTokens.isPresent()) {
+            SpotifyTokens tokens = optionalTokens.get();
+
+            if (tokens.shouldRefreshToken()) {
+                //refresh token
+                return BaseWebClient.refreshSpotifyTokens(session.getId(), tokens);
             }
         }
+
         return true;
     }
 

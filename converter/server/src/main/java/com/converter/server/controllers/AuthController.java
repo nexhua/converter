@@ -7,6 +7,9 @@ import com.converter.server.helpers.RandomString;
 import com.converter.server.services.ClientIDService;
 import com.converter.server.services.SpotifyTokenService;
 import com.converter.server.tokens.SpotifyTokens;
+import org.apache.catalina.session.StandardSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,6 +22,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Optional;
@@ -33,68 +38,67 @@ public class AuthController {
     @Autowired
     SpotifyTokenService spotifyTokenService;
 
+    Logger logger = LoggerFactory.getLogger(AuthController.class);
+
     @GetMapping("/spotify")
     public ResponseEntity<?> authorizeSpotify(HttpServletRequest request) {
+        logger.info("Started - Auth Spotify Process");
+
+        HttpSession session = request.getSession();
 
         String state = RandomString.generateRandomString(11);
 
         URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_auth_base)
-                        .path(SpotifyAPIConstants.authorize_path)
+                .path(SpotifyAPIConstants.authorize_path)
                 .queryParam(SpotifyAPIConstants.client_id, SpotifyApplicationConstants.client_id)
                 .queryParam(SpotifyAPIConstants.response_type, "code")
                 .queryParam(SpotifyAPIConstants.scope, "playlist-read-private playlist-read-collaborative")
                 .queryParam(SpotifyAPIConstants.state, state)
                 .queryParam(SpotifyAPIConstants.redirect_uri, SpotifyAPIConstants.app_spotify_redirect_endpoint)
-                        .build().toUri();
+                .build().toUri();
 
         HttpHeaders headers = new HttpHeaders();
 
-        String sessionID = RandomString.generateRandomString(32);
-
-        headers.add(HttpHeaders.SET_COOKIE, "SESSIONID="+sessionID+"; Path=/");
         headers.add(HttpHeaders.LOCATION, uri.toString());
 
-        this.clientIDService.putSession(sessionID, state);
+        this.clientIDService.putSession(session.getId(), state);
 
-       return new ResponseEntity(headers, HttpStatus.MOVED_PERMANENTLY);
-
+        logger.info("Redirect - Spotify Code Access");
+        return new ResponseEntity(headers, HttpStatus.FOUND);
     }
 
     @GetMapping("/spotify/access")
     public ResponseEntity<?> accessToken(HttpServletRequest request, @RequestParam(required = false) String code, @RequestParam(required = false) String state) {
 
-        Optional<Cookie> sessionCookie = Arrays.stream(request.getCookies()).filter(cookie -> cookie.getName().equals("SESSIONID")).findFirst();
+        HttpSession session = request.getSession();
 
-        if(!sessionCookie.isEmpty()) {
-            String sessionID = sessionCookie.get().getValue();
+        String sessionID = session.getId();
 
-            String state1 = this.clientIDService.findSession(sessionID);
+        Optional<String> sessionStateOptional = this.clientIDService.findSessionOptional(sessionID);
 
-            if(state == null) {
-                //If there is no state that is matched with the session id
-                return ResponseEntity.notFound().build();
-            }
+        if (state == null) {
+            //If there is no state that is matched with the session id
+            return ResponseEntity.notFound().build();
+        }
 
-            if(state.equals(request.getParameter(SpotifyAPIConstants.state))) {
+        if (sessionStateOptional.isPresent()) {
+            if (sessionStateOptional.get().equals(state)) {
                 //If the state matches, check code and proceed with the authorization code to get the access and refresh tokens
-                String code1 = request.getParameter(SpotifyAPIConstants.code);
-                if(code != null) {
+                if (code != null) {
 
                     Optional<SpotifyTokens> optionalTokens = BaseWebClient.getSpotifyTokens(code);
 
-                    if(optionalTokens.isPresent()) {
+                    if (optionalTokens.isPresent()) {
                         this.spotifyTokenService.add(sessionID, optionalTokens.get());
+                        logger.info("Success - Received Spotify Tokens");
                         return new ResponseEntity<>(optionalTokens.get(), HttpStatus.OK);
-                    }
-                    else {
+                    } else {
                         new ResponseEntity<>(HttpStatus.BAD_REQUEST);
                     }
-                }
-                else {
+                } else {
                     return new ResponseEntity<>(request.getParameter("error"), HttpStatus.BAD_REQUEST);
                 }
-            }
-            else {
+            } else {
                 this.clientIDService.removeSession(sessionID);
                 //If state send for authorization code is not the same with the request state
                 return ResponseEntity.badRequest().build();

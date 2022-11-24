@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class ClientIDService {
@@ -16,11 +17,21 @@ public class ClientIDService {
     }
 
     public void putSession(String sessionID, String state) {
-        this.sessionIDs.put(sessionID,state);
+        this.sessionIDs.put(sessionID, state);
     }
 
     public String findSession(String sessionID) {
         return this.sessionIDs.get(sessionID);
+    }
+
+    public Optional<String> findSessionOptional(String sessionID) {
+        String session = this.sessionIDs.get(sessionID);
+
+        if (session != null) {
+            return Optional.of(session);
+        } else {
+            return Optional.empty();
+        }
     }
 
     public void removeSession(String sessionID) {
