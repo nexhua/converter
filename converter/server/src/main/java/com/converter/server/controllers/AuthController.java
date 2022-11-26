@@ -42,8 +42,6 @@ public class AuthController {
 
     @GetMapping("/spotify")
     public ResponseEntity<?> authorizeSpotify(HttpServletRequest request) {
-        logger.info("Started - Auth Spotify Process");
-
         HttpSession session = request.getSession();
 
         String state = RandomString.generateRandomString(11);
@@ -69,7 +67,6 @@ public class AuthController {
 
     @GetMapping("/spotify/access")
     public ResponseEntity<?> accessToken(HttpServletRequest request, @RequestParam(required = false) String code, @RequestParam(required = false) String state) {
-
         HttpSession session = request.getSession();
 
         String sessionID = session.getId();
@@ -93,19 +90,23 @@ public class AuthController {
                         logger.info("Success - Received Spotify Tokens");
                         return new ResponseEntity<>(optionalTokens.get(), HttpStatus.OK);
                     } else {
+                        logger.warn("Failed - No Tokens Received");
                         new ResponseEntity<>(HttpStatus.BAD_REQUEST);
                     }
                 } else {
+                    logger.warn(String.format("Failed - No Code Received - %s", request.getParameter("error")));
                     return new ResponseEntity<>(request.getParameter("error"), HttpStatus.BAD_REQUEST);
                 }
             } else {
+                logger.warn("Failed - State Mismatch");
                 this.clientIDService.removeSession(sessionID);
                 //If state send for authorization code is not the same with the request state
                 return ResponseEntity.badRequest().build();
             }
         }
 
-        //If request does not have SESSIONID cookie
+        //If request does not have session and state pair
+        logger.warn("Failed - No Session-State Pair Found");
         return ResponseEntity.internalServerError().build();
     }
 }
