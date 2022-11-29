@@ -17,6 +17,9 @@ public class CommonTrack {
 
     private PlatformTypes originPlatform;
 
+    public CommonTrack() {
+
+    }
     public CommonTrack(PlatformTypes originPlatform) {
         this.originPlatform = originPlatform;
     }

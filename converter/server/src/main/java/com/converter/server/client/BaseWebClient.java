@@ -2,27 +2,34 @@ package com.converter.server.client;
 
 import com.converter.server.constants.SpotifyAPIConstants;
 import com.converter.server.constants.SpotifyApplicationConstants;
-import com.converter.server.entities.spotify.SpotifyPlaylist;
-import com.converter.server.entities.spotify.SpotifyPlaylists;
-import com.converter.server.entities.spotify.SpotifyTracks;
+import com.converter.server.entities.common.CommonTrack;
+import com.converter.server.entities.spotify.*;
 import com.converter.server.exceptions.SpotifyResponseException;
+import com.converter.server.search.SpotifySearch;
 import com.converter.server.services.ClientIDService;
 import com.converter.server.tokens.SpotifyTokens;
+import com.fasterxml.jackson.databind.util.JSONPObject;
+import org.apache.tomcat.util.json.JSONParser;
+import org.apache.tomcat.util.json.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.jackson.JsonObjectSerializer;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Optional;
 
 public class BaseWebClient {
@@ -216,5 +223,27 @@ public class BaseWebClient {
             logger.warn(String.format("Failed - Spotify Refresh Tokens - %s", exception.getMessage()));
             return false;
         }
+    }
+
+    public static Mono<SpotifyTrackSearchResultWrapper> getSpotifySearch(SpotifyTokens tokens, ArrayList<CommonTrack> tracksToSearch) {
+        SpotifySearch spotifySearch = new SpotifySearch(tracksToSearch.get(0));
+
+        Optional<SpotifyTrackSearchResultWrapper> response = Optional.empty();
+        try {
+            Mono<SpotifyTrackSearchResultWrapper> spotifyTrackSearchResultWrapperMono = client.get()
+                    .uri(spotifySearch.getSearchString())
+                    .header(HttpHeaders.AUTHORIZATION, tokens.toBearerTokenString())
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .retrieve()
+                    .bodyToMono(SpotifyTrackSearchResultWrapper.class)
+                    .log();
+
+            return spotifyTrackSearchResultWrapperMono;
+        } catch (
+                NestedRuntimeException exception) {
+            logger.warn(String.format("Failed - Spotify Search - %s", exception.getMessage()));
+        }
+
+        return Mono.empty();
     }
 }
