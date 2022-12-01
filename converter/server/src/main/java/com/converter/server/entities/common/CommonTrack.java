@@ -1,6 +1,7 @@
 package com.converter.server.entities.common;
 
 import com.converter.server.constants.PlatformTypes;
+import com.converter.server.constants.TrackStructure;
 import com.converter.server.entities.Identifiers;
 
 import java.util.ArrayList;
@@ -17,8 +18,16 @@ public class CommonTrack {
 
     private PlatformTypes originPlatform;
 
+    private String unstructuredFullName;
+
+    private TrackStructure trackStructure;
+
     public CommonTrack() {
 
+    }
+
+    public boolean IsStructured() {
+        return TrackStructure.STRUCTURED == this.getTrackStructure();
     }
     public CommonTrack(PlatformTypes originPlatform) {
         this.originPlatform = originPlatform;
@@ -64,6 +73,22 @@ public class CommonTrack {
 
     public void setOriginPlatform(PlatformTypes originPlatform) {
         this.originPlatform = originPlatform;
+    }
+
+    public String getUnstructuredFullName() {
+        return unstructuredFullName;
+    }
+
+    public void setUnstructuredFullName(String unstructuredFullName) {
+        this.unstructuredFullName = unstructuredFullName;
+    }
+
+    public TrackStructure getTrackStructure() {
+        return trackStructure;
+    }
+
+    public void setTrackStructure(TrackStructure trackStructure) {
+        this.trackStructure = trackStructure;
     }
 
     //endregion

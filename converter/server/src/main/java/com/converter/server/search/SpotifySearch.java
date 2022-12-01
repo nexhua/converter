@@ -16,26 +16,29 @@ public class SpotifySearch extends AbstractPlatformSearch {
 
     @Override
     String build() {
-        String uri = UriComponentsBuilder
+        return UriComponentsBuilder
                 .fromHttpUrl(SpotifyAPIConstants.spotify_api_base)
                 .path("/search")
                 .queryParam("type", "track")
                 .queryParam("q", this.getParams())
                 .build()
                 .toUriString();
-
-        return uri;
     }
 
     String getParams() {
-        StringBuilder builder = new StringBuilder();
 
-        builder.append("track").append(":").append(this.getTrack().getName()).append(" ");
-        builder.append("album").append(":").append(this.getTrack().getAlbum().getName()).append(" ");
-        builder.append("year").append(":").append(this.getTrack().getAlbum().getRelease_year()).append(" ");
-        builder.append("artist").append(":").append(this.getTrack().getArtist().get(0).getName()).append(" ");
+        if (this.getTrack().IsStructured()) {
+            StringBuilder builder = new StringBuilder();
 
-        return builder.toString();
+            builder.append("track").append(":").append(this.getTrack().getName()).append(" ");
+            builder.append("album").append(":").append(this.getTrack().getAlbum().getName()).append(" ");
+            builder.append("year").append(":").append(this.getTrack().getAlbum().getRelease_year()).append(" ");
+            builder.append("artist").append(":").append(this.getTrack().getArtist().get(0).getName()).append(" ");
+
+            return builder.toString();
+        } else {
+            return this.track.getUnstructuredFullName();
+        }
     }
 
     public SpotifySearch(CommonTrack track) {

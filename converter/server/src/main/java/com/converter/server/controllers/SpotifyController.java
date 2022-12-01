@@ -106,8 +106,9 @@ public class SpotifyController {
             SpotifyTokens tokens = tokensOptional.get();
 
             Mono<SpotifyTrackSearchResultWrapper> response = BaseWebClient.getSpotifySearch(tokens, tracks);
+
             return response.map(
-                    ResponseEntity::ok).defaultIfEmpty(ResponseEntity.badRequest().build());
+                    ResponseEntity::ok).defaultIfEmpty(ResponseEntity.badRequest().build()) ;
         }
 
         return Mono.just(ResponseEntity.internalServerError().build());

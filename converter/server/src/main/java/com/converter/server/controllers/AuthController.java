@@ -48,7 +48,7 @@ public class AuthController {
 
         URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_auth_base)
                 .path(SpotifyAPIConstants.authorize_path)
-                .queryParam(SpotifyAPIConstants.client_id, SpotifyApplicationConstants.client_id)
+                .queryParam(SpotifyAPIConstants.client_id, SpotifyApplicationConstants.getClient_id())
                 .queryParam(SpotifyAPIConstants.response_type, "code")
                 .queryParam(SpotifyAPIConstants.scope, "playlist-read-private playlist-read-collaborative")
                 .queryParam(SpotifyAPIConstants.state, state)

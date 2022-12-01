@@ -2,8 +2,13 @@ package com.converter.server.client;
 
 import com.converter.server.constants.SpotifyAPIConstants;
 import com.converter.server.constants.SpotifyApplicationConstants;
+import com.converter.server.constants.YoutubeAPIConstants;
+import com.converter.server.constants.YoutubeApplicationConstants;
 import com.converter.server.entities.common.CommonTrack;
 import com.converter.server.entities.spotify.*;
+import com.converter.server.entities.youtube.YoutubePlaylistItem;
+import com.converter.server.entities.youtube.YoutubePlaylistItemSnippet;
+import com.converter.server.entities.youtube.YoutubeResult;
 import com.converter.server.exceptions.SpotifyResponseException;
 import com.converter.server.search.SpotifySearch;
 import com.converter.server.services.ClientIDService;
@@ -238,6 +243,8 @@ public class BaseWebClient {
                     .bodyToMono(SpotifyTrackSearchResultWrapper.class)
                     .log();
 
+            spotifyTrackSearchResultWrapperMono.subscribe(System.out::println);
+
             return spotifyTrackSearchResultWrapperMono;
         } catch (
                 NestedRuntimeException exception) {
@@ -245,5 +252,32 @@ public class BaseWebClient {
         }
 
         return Mono.empty();
+    }
+
+    public static String getYoutubePlaylistItems(String playlistID) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(YoutubeAPIConstants.youtube_api_base)
+                .path(YoutubeAPIConstants.youtube_api_version_path)
+                .path(YoutubeAPIConstants.playlist_items_path)
+                .queryParam(YoutubeAPIConstants.part, YoutubeAPIConstants.snippet)
+                .queryParam(YoutubeAPIConstants.playlistId, playlistID)
+                .queryParam(YoutubeAPIConstants.key, YoutubeApplicationConstants.getApplicationApiKey())
+                .build().toUri();
+
+        String result = "";
+        try {
+            String playlist = client.get()
+                    .uri(uri)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            if (playlist != null) {
+                result = playlist;
+                logger.info("Success - Youtube Playlist Get");
+            }
+        } catch (Exception e) {
+            logger.warn(String.format("Failed - Youtube Playlist Get - %s", e.getMessage()));
+        }
+        return result;
     }
 }

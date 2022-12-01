@@ -34,3 +34,4 @@ build/
 
 ### Exclude Files ###
 /src/main/java/com/converter/server/constants/SpotifyApplicationConstants.java
+/src/main/java/com/converter/server/constants/YoutubeApplicationConstants.java

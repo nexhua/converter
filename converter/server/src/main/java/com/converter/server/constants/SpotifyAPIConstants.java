@@ -40,6 +40,7 @@ public class SpotifyAPIConstants {
 
     //App Spotify URLs
 
+    //must be added to recognized urls for spotify
     public static final String app_spotify_redirect_endpoint = "http://localhost:8080/auth/spotify/access";
 
     //endregion

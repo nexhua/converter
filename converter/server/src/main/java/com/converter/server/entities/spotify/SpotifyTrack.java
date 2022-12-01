@@ -1,6 +1,7 @@
 package com.converter.server.entities.spotify;
 
 import com.converter.server.constants.PlatformTypes;
+import com.converter.server.constants.TrackStructure;
 import com.converter.server.entities.Identifiers;
 import com.converter.server.entities.common.CommonAlbum;
 import com.converter.server.entities.common.CommonArtist;
@@ -98,7 +99,7 @@ public class SpotifyTrack implements IConvertible {
         album.setRelease_year(parsedYear);
 
         ArrayList<CommonArtist> albumArtists = new ArrayList<>();
-        for(int i = 0;i<this.getAlbum().getArtists().size();i++) {
+        for (int i = 0; i < this.getAlbum().getArtists().size(); i++) {
             CommonArtist artist = new CommonArtist();
             artist.setName(this.getAlbum().getArtists().get(i).getName());
             albumArtists.add(artist);
@@ -111,7 +112,7 @@ public class SpotifyTrack implements IConvertible {
     public ArrayList<CommonArtist> convertArtists() {
         ArrayList<CommonArtist> artists = new ArrayList<>();
 
-        for(int i = 0;i<this.getArtists().size();i++) {
+        for (int i = 0; i < this.getArtists().size(); i++) {
             CommonArtist artist = new CommonArtist();
             artist.setName(this.getArtists().get(i).getName());
             artists.add(artist);
@@ -123,7 +124,9 @@ public class SpotifyTrack implements IConvertible {
     public CommonTrack convertTrack(PlatformTypes platformType) {
         CommonTrack track = new CommonTrack(platformType);
         track.setName(this.getName());
+        track.setUnstructuredFullName(String.format("%s %s", this.getArtists().get(0).getName(), this.getName()));
         track.setUniversal_identifiers(this.getExternal_ids());
+        track.setTrackStructure(TrackStructure.STRUCTURED);
         return track;
     }
 }
