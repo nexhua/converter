@@ -9,6 +9,7 @@ import com.converter.server.entities.spotify.*;
 import com.converter.server.entities.youtube.YoutubePlaylistItem;
 import com.converter.server.entities.youtube.YoutubePlaylistItemSnippet;
 import com.converter.server.entities.youtube.YoutubeResult;
+import com.converter.server.entities.youtube.YoutubeVideoResultBase;
 import com.converter.server.exceptions.SpotifyResponseException;
 import com.converter.server.search.SpotifySearch;
 import com.converter.server.services.ClientIDService;
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jackson.JsonObjectSerializer;
 import org.springframework.core.NestedRuntimeException;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -254,7 +256,7 @@ public class BaseWebClient {
         return Mono.empty();
     }
 
-    public static String getYoutubePlaylistItems(String playlistID) {
+    public static Optional<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>> getYoutubePlaylistItems(String playlistID) {
         URI uri = UriComponentsBuilder.fromHttpUrl(YoutubeAPIConstants.youtube_api_base)
                 .path(YoutubeAPIConstants.youtube_api_version_path)
                 .path(YoutubeAPIConstants.playlist_items_path)
@@ -263,16 +265,18 @@ public class BaseWebClient {
                 .queryParam(YoutubeAPIConstants.key, YoutubeApplicationConstants.getApplicationApiKey())
                 .build().toUri();
 
-        String result = "";
+        Optional<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>> result = Optional.empty();
         try {
-            String playlist = client.get()
+            var typeRef = new ParameterizedTypeReference<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>>() {
+            };
+            YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>> playlistItems = client.get()
                     .uri(uri)
                     .retrieve()
-                    .bodyToMono(String.class)
+                    .bodyToMono(typeRef)
                     .block();
 
-            if (playlist != null) {
-                result = playlist;
+            if (playlistItems != null) {
+                result = Optional.of(playlistItems);
                 logger.info("Success - Youtube Playlist Get");
             }
         } catch (Exception e) {

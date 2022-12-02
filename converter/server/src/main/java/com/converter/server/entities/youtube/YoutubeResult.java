@@ -1,21 +1,24 @@
 package com.converter.server.entities.youtube;
 
+import java.util.ArrayList;
+
 public class YoutubeResult<T> extends YoutubeBaseWithPagination {
 
-    private T items;
+    private ArrayList<T> items;
 
     public YoutubeResult() {
     }
 
     //region Getters and Setters
 
-    public T getItems() {
+    public ArrayList<T> getItems() {
         return items;
     }
 
-    public void setItems(T items) {
+    public void setItems(ArrayList<T> items) {
         this.items = items;
     }
+
 
     //endregion
 }
