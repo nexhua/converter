@@ -29,6 +29,7 @@ public class CommonTrack {
     public boolean IsStructured() {
         return TrackStructure.STRUCTURED == this.getTrackStructure();
     }
+
     public CommonTrack(PlatformTypes originPlatform) {
         this.originPlatform = originPlatform;
     }

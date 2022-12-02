@@ -44,10 +44,9 @@ public class SpotifyTokenService {
     public Optional<SpotifyTokens> findOptional(String sessionID) {
         SpotifyTokens tokens = this.spotifySessionTokens.get(sessionID);
 
-        if(tokens != null) {
+        if (tokens != null) {
             return Optional.of(tokens);
-        }
-        else {
+        } else {
             return Optional.empty();
         }
     }

@@ -1,7 +1,6 @@
 package com.converter.server.entities.spotify;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class SpotifyPlaylists extends SpotifyPagination {
 

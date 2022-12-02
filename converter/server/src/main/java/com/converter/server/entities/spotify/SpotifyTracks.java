@@ -2,7 +2,7 @@ package com.converter.server.entities.spotify;
 
 import java.util.ArrayList;
 
-public class SpotifyTracks extends SpotifyPagination  {
+public class SpotifyTracks extends SpotifyPagination {
 
     private String href;
 

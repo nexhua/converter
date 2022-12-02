@@ -1,32 +1,24 @@
-package com.converter.server.client;
+package com.converter.server.clients;
 
 import com.converter.server.constants.SpotifyAPIConstants;
 import com.converter.server.constants.SpotifyApplicationConstants;
-import com.converter.server.constants.YoutubeAPIConstants;
-import com.converter.server.constants.YoutubeApplicationConstants;
 import com.converter.server.entities.common.CommonTrack;
-import com.converter.server.entities.spotify.*;
-import com.converter.server.entities.youtube.YoutubePlaylistItem;
-import com.converter.server.entities.youtube.YoutubePlaylistItemSnippet;
-import com.converter.server.entities.youtube.YoutubeResult;
-import com.converter.server.entities.youtube.YoutubeVideoResultBase;
+import com.converter.server.entities.spotify.SpotifyPlaylist;
+import com.converter.server.entities.spotify.SpotifyPlaylists;
+import com.converter.server.entities.spotify.SpotifyTrackSearchResultWrapper;
+import com.converter.server.entities.spotify.SpotifyTracks;
 import com.converter.server.exceptions.SpotifyResponseException;
 import com.converter.server.search.SpotifySearch;
 import com.converter.server.services.ClientIDService;
 import com.converter.server.tokens.SpotifyTokens;
-import com.fasterxml.jackson.databind.util.JSONPObject;
-import org.apache.tomcat.util.json.JSONParser;
-import org.apache.tomcat.util.json.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.jackson.JsonObjectSerializer;
 import org.springframework.core.NestedRuntimeException;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -39,21 +31,21 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Optional;
 
-public class BaseWebClient {
+@Component
+public class SpotifyWebClient {
 
-    static Logger logger = LoggerFactory.getLogger(BaseWebClient.class);
+    static Logger logger = LoggerFactory.getLogger(SpotifyWebClient.class);
 
     @Autowired
-    private ClientIDService clientIDService;
+    private ClientIDService service;
 
-    private static final WebClient client = WebClient.builder()
+    private final WebClient client = WebClient.builder()
             .exchangeStrategies(ExchangeStrategies.builder()
                     .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(10485760))
                     .build())
             .build();
 
-
-    public static Optional<SpotifyTokens> getSpotifyTokens(String code) {
+    public Optional<SpotifyTokens> getSpotifyTokens(String code) {
         URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_auth_base)
                 .path(SpotifyAPIConstants.api_token_path).build().toUri();
 
@@ -91,7 +83,7 @@ public class BaseWebClient {
         return optionalSpotifyTokens;
     }
 
-    public static Optional<SpotifyPlaylists> getUserPlaylists(SpotifyTokens tokens, int limit, int offset) {
+    public Optional<SpotifyPlaylists> getUserPlaylists(SpotifyTokens tokens, int limit, int offset) {
         if (limit <= 0 || limit > 50) {
             limit = 10;
         }
@@ -128,7 +120,7 @@ public class BaseWebClient {
         return optionalSpotifyPlaylists;
     }
 
-    public static Optional<SpotifyPlaylist> getUserPlaylist(SpotifyTokens tokens, String playlistID) {
+    public Optional<SpotifyPlaylist> getUserPlaylist(SpotifyTokens tokens, String playlistID) {
         URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_api_base)
                 .path("/playlists")
                 .path("/" + playlistID)
@@ -160,7 +152,7 @@ public class BaseWebClient {
         return optionalSpotifyPlaylist;
     }
 
-    public static Optional<SpotifyTracks> getPlaylistTracks(SpotifyTokens tokens, String playlistID, int limit, int offset) {
+    public Optional<SpotifyTracks> getPlaylistTracks(SpotifyTokens tokens, String playlistID, int limit, int offset) {
         URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_api_base)
                 .path("/playlists")
                 .path("/" + playlistID)
@@ -196,7 +188,7 @@ public class BaseWebClient {
         return optionalSpotifyPlaylist;
     }
 
-    public static boolean refreshSpotifyTokens(String sessionID, SpotifyTokens tokens) {
+    public boolean refreshSpotifyTokens(String sessionID, SpotifyTokens tokens) {
         logger.info("Started - Spotify Refresh Tokens");
         URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_auth_base)
                 .path(SpotifyAPIConstants.api_token_path).build().toUri();
@@ -232,7 +224,7 @@ public class BaseWebClient {
         }
     }
 
-    public static Mono<SpotifyTrackSearchResultWrapper> getSpotifySearch(SpotifyTokens tokens, ArrayList<CommonTrack> tracksToSearch) {
+    public Mono<SpotifyTrackSearchResultWrapper> getSpotifySearch(SpotifyTokens tokens, ArrayList<CommonTrack> tracksToSearch) {
         SpotifySearch spotifySearch = new SpotifySearch(tracksToSearch.get(0));
 
         Optional<SpotifyTrackSearchResultWrapper> response = Optional.empty();
@@ -254,34 +246,5 @@ public class BaseWebClient {
         }
 
         return Mono.empty();
-    }
-
-    public static Optional<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>> getYoutubePlaylistItems(String playlistID) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(YoutubeAPIConstants.youtube_api_base)
-                .path(YoutubeAPIConstants.youtube_api_version_path)
-                .path(YoutubeAPIConstants.playlist_items_path)
-                .queryParam(YoutubeAPIConstants.part, YoutubeAPIConstants.snippet)
-                .queryParam(YoutubeAPIConstants.playlistId, playlistID)
-                .queryParam(YoutubeAPIConstants.key, YoutubeApplicationConstants.getApplicationApiKey())
-                .build().toUri();
-
-        Optional<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>> result = Optional.empty();
-        try {
-            var typeRef = new ParameterizedTypeReference<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>>() {
-            };
-            YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>> playlistItems = client.get()
-                    .uri(uri)
-                    .retrieve()
-                    .bodyToMono(typeRef)
-                    .block();
-
-            if (playlistItems != null) {
-                result = Optional.of(playlistItems);
-                logger.info("Success - Youtube Playlist Get");
-            }
-        } catch (Exception e) {
-            logger.warn(String.format("Failed - Youtube Playlist Get - %s", e.getMessage()));
-        }
-        return result;
     }
 }

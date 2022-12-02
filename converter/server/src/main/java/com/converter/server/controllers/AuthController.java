@@ -1,13 +1,12 @@
 package com.converter.server.controllers;
 
-import com.converter.server.client.BaseWebClient;
+import com.converter.server.clients.SpotifyWebClient;
 import com.converter.server.constants.SpotifyAPIConstants;
 import com.converter.server.constants.SpotifyApplicationConstants;
 import com.converter.server.helpers.RandomString;
 import com.converter.server.services.ClientIDService;
 import com.converter.server.services.SpotifyTokenService;
 import com.converter.server.tokens.SpotifyTokens;
-import org.apache.catalina.session.StandardSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +19,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Optional;
 
 @RestController
@@ -37,6 +33,9 @@ public class AuthController {
 
     @Autowired
     SpotifyTokenService spotifyTokenService;
+
+    @Autowired
+    SpotifyWebClient spotifyWebClient;
 
     Logger logger = LoggerFactory.getLogger(AuthController.class);
 
@@ -83,7 +82,7 @@ public class AuthController {
                 //If the state matches, check code and proceed with the authorization code to get the access and refresh tokens
                 if (code != null) {
 
-                    Optional<SpotifyTokens> optionalTokens = BaseWebClient.getSpotifyTokens(code);
+                    Optional<SpotifyTokens> optionalTokens = spotifyWebClient.getSpotifyTokens(code);
 
                     if (optionalTokens.isPresent()) {
                         this.spotifyTokenService.add(sessionID, optionalTokens.get());

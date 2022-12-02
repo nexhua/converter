@@ -1,6 +1,7 @@
 package com.converter.server.controllers;
 
-import com.converter.server.client.BaseWebClient;
+import com.converter.server.clients.YoutubeWebClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,13 +15,15 @@ import javax.servlet.http.HttpSession;
 @RequestMapping("/youtube")
 public class YoutubeController {
 
+    @Autowired
+    private YoutubeWebClient youtubeWebClient;
 
     @GetMapping("/playlists/{playlistID}/tracks")
     public ResponseEntity<?> getYoutubePlaylistTracks(HttpServletRequest request, @PathVariable String playlistID) {
 
         HttpSession session = request.getSession();
 
-        return ResponseEntity.ok(BaseWebClient.getYoutubePlaylistItems(playlistID));
+        return ResponseEntity.ok(youtubeWebClient.getYoutubePlaylistItems(playlistID));
     }
 
 }

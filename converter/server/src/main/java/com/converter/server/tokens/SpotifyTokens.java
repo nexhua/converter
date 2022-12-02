@@ -1,7 +1,6 @@
 package com.converter.server.tokens;
 
 import java.util.Calendar;
-import java.util.Date;
 
 public class SpotifyTokens {
     private String access_token;
@@ -87,7 +86,7 @@ public class SpotifyTokens {
     }
 
     public boolean shouldRefreshToken() {
-        if(this.tokenExpireDate != null) {
+        if (this.tokenExpireDate != null) {
             return this.tokenExpireDate.compareTo(Calendar.getInstance()) <= 0;
         }
 

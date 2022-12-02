@@ -1,16 +1,14 @@
 package com.converter.server.interceptors;
 
-import com.converter.server.client.BaseWebClient;
+import com.converter.server.clients.SpotifyWebClient;
 import com.converter.server.services.SpotifyTokenService;
 import com.converter.server.tokens.SpotifyTokens;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.util.Arrays;
 import java.util.Optional;
 
 public class SpotifyTokenInterceptor implements HandlerInterceptor {
@@ -18,8 +16,11 @@ public class SpotifyTokenInterceptor implements HandlerInterceptor {
 
     private final SpotifyTokenService spotifyTokenService;
 
-    public SpotifyTokenInterceptor(SpotifyTokenService spotifyTokenService) {
+    private final SpotifyWebClient spotifyWebClient;
+
+    public SpotifyTokenInterceptor(SpotifyTokenService spotifyTokenService, SpotifyWebClient spotifyWebClient) {
         this.spotifyTokenService = spotifyTokenService;
+        this.spotifyWebClient = spotifyWebClient;
     }
 
     @Override
@@ -34,7 +35,7 @@ public class SpotifyTokenInterceptor implements HandlerInterceptor {
 
             if (tokens.shouldRefreshToken()) {
                 //refresh token
-                return BaseWebClient.refreshSpotifyTokens(session.getId(), tokens);
+                return spotifyWebClient.refreshSpotifyTokens(session.getId(), tokens);
             }
         }
 
