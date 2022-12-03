@@ -1,6 +1,7 @@
 package com.converter.server.controllers;
 
 import com.converter.server.clients.YoutubeWebClient;
+import com.converter.server.converters.YoutubeConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,7 +24,15 @@ public class YoutubeController {
 
         HttpSession session = request.getSession();
 
-        return ResponseEntity.ok(youtubeWebClient.getYoutubePlaylistItems(playlistID));
+        var optionalSongs = youtubeWebClient.getYoutubePlaylistItems(playlistID);
+
+        if (optionalSongs.isPresent()) {
+            YoutubeConverter converter = new YoutubeConverter();
+            return ResponseEntity.ok().body(converter.toCommonTracks(optionalSongs.get().getItems()));
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+
     }
 
 }

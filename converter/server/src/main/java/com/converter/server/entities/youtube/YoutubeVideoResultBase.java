@@ -1,10 +1,22 @@
 package com.converter.server.entities.youtube;
 
-public class YoutubeVideoResultBase<T> extends YoutubeBase {
+import com.converter.server.constants.PlatformTypes;
+import com.converter.server.constants.TrackStructure;
+import com.converter.server.entities.common.CommonAlbum;
+import com.converter.server.entities.common.CommonArtist;
+import com.converter.server.entities.common.CommonTrack;
+import com.converter.server.interfaces.IConvertible;
+
+import java.util.ArrayList;
+
+public class YoutubeVideoResultBase<T> extends YoutubeBase implements IConvertible {
 
     private String id;
 
     private T snippet;
+
+    public YoutubeVideoResultBase() {
+    }
 
     //region Getters and Setters
 
@@ -26,4 +38,30 @@ public class YoutubeVideoResultBase<T> extends YoutubeBase {
 
 
     //endregion
+
+
+    @Override
+    public PlatformTypes getPlatformType() {
+        return PlatformTypes.YOUTUBE;
+    }
+
+    @Override
+    public CommonAlbum convertAlbum() {
+        return null;
+    }
+
+    @Override
+    public ArrayList<CommonArtist> convertArtists() {
+        return null;
+    }
+
+    @Override
+    public CommonTrack convertTrack() {
+        CommonTrack track = new CommonTrack(this.getPlatformType());
+        track.setTrackStructure(TrackStructure.UNSTRUCTURED);
+        if (this.getSnippet() instanceof YoutubePlaylistItemSnippet) {
+            track.setUnstructuredFullName(((YoutubePlaylistItemSnippet) this.getSnippet()).getTitle());
+        }
+        return track;
+    }
 }

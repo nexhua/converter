@@ -15,5 +15,5 @@ public interface IConvertible {
 
     ArrayList<CommonArtist> convertArtists();
 
-    CommonTrack convertTrack(PlatformTypes platformType);
+    CommonTrack convertTrack();
 }

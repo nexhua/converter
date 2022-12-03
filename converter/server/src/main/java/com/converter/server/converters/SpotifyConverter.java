@@ -10,10 +10,7 @@ public class SpotifyConverter extends BaseTrackConverter<SpotifyTrack, CommonTra
     }
 
     private static CommonTrack spotifyTrackToCommon(SpotifyTrack track) {
-        CommonTrack baseTrack = track.convertTrack(track.getPlatformType());
-        baseTrack.setAlbum(track.convertAlbum());
-        baseTrack.setArtist(track.convertArtists());
-        return baseTrack;
+        return track.convertTrack();
     }
 
     private static SpotifyTrack commonTrackToSpotify(CommonTrack track) {

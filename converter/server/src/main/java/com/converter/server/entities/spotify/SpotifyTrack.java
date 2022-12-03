@@ -121,11 +121,13 @@ public class SpotifyTrack implements IConvertible {
     }
 
     @Override
-    public CommonTrack convertTrack(PlatformTypes platformType) {
-        CommonTrack track = new CommonTrack(platformType);
+    public CommonTrack convertTrack() {
+        CommonTrack track = new CommonTrack(this.getPlatformType());
         track.setName(this.getName());
         track.setUnstructuredFullName(String.format("%s %s", this.getArtists().get(0).getName(), this.getName()));
         track.setUniversal_identifiers(this.getExternal_ids());
+        track.setAlbum(this.convertAlbum());
+        track.setArtist(this.convertArtists());
         track.setTrackStructure(TrackStructure.STRUCTURED);
         return track;
     }

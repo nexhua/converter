@@ -25,6 +25,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -224,27 +225,23 @@ public class SpotifyWebClient {
         }
     }
 
-    public Mono<SpotifyTrackSearchResultWrapper> getSpotifySearch(SpotifyTokens tokens, ArrayList<CommonTrack> tracksToSearch) {
-        SpotifySearch spotifySearch = new SpotifySearch(tracksToSearch.get(0));
+    public Flux<SpotifyTrackSearchResultWrapper> getSpotifySearch(SpotifyTokens tokens, ArrayList<CommonTrack> tracksToSearch) {
 
-        Optional<SpotifyTrackSearchResultWrapper> response = Optional.empty();
-        try {
-            Mono<SpotifyTrackSearchResultWrapper> spotifyTrackSearchResultWrapperMono = client.get()
-                    .uri(spotifySearch.getSearchString())
-                    .header(HttpHeaders.AUTHORIZATION, tokens.toBearerTokenString())
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .retrieve()
-                    .bodyToMono(SpotifyTrackSearchResultWrapper.class)
-                    .log();
 
-            spotifyTrackSearchResultWrapperMono.subscribe(System.out::println);
+        return Flux.fromIterable(tracksToSearch)
+                .flatMapSequential(track -> getSearchResult(track, tokens));
+    }
 
-            return spotifyTrackSearchResultWrapperMono;
-        } catch (
-                NestedRuntimeException exception) {
-            logger.warn(String.format("Failed - Spotify Search - %s", exception.getMessage()));
-        }
-
-        return Mono.empty();
+    private Mono<SpotifyTrackSearchResultWrapper> getSearchResult(CommonTrack track, SpotifyTokens tokens) {
+        SpotifySearch spotifySearch = new SpotifySearch(track);
+        logger.info("Spotify - Search Track");
+        return client
+                .get()
+                .uri(spotifySearch.getSearchString())
+                .header(HttpHeaders.AUTHORIZATION, tokens.toBearerTokenString())
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .retrieve()
+                .bodyToMono(SpotifyTrackSearchResultWrapper.class)
+                .log();
     }
 }

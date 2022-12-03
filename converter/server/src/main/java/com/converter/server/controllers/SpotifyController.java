@@ -2,23 +2,21 @@ package com.converter.server.controllers;
 
 
 import com.converter.server.clients.SpotifyWebClient;
+import com.converter.server.converters.SpotifyConverter;
 import com.converter.server.entities.common.CommonTrack;
-import com.converter.server.entities.spotify.SpotifyPlaylist;
-import com.converter.server.entities.spotify.SpotifyPlaylists;
-import com.converter.server.entities.spotify.SpotifyTrackSearchResultWrapper;
-import com.converter.server.entities.spotify.SpotifyTracks;
+import com.converter.server.entities.spotify.*;
 import com.converter.server.services.SpotifyTokenService;
 import com.converter.server.tokens.SpotifyTokens;
-import org.apache.tomcat.util.json.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/spotify")
@@ -86,7 +84,8 @@ public class SpotifyController {
             Optional<SpotifyTracks> playlist = spotifyWebClient.getPlaylistTracks(tokens, playlistID, limit, offset);
 
             if (playlist.isPresent()) {
-                return ResponseEntity.ok(playlist.get());
+                SpotifyConverter converter = new SpotifyConverter();
+                return ResponseEntity.ok(converter.toCommonTracks(playlist.get().getItems().stream().map(SpotifyTrackWrapper::getTrack).collect(Collectors.toList())));
             } else {
                 return ResponseEntity.badRequest().build();
             }
@@ -96,7 +95,7 @@ public class SpotifyController {
     }
 
     @GetMapping("/search")
-    public Mono<ResponseEntity<SpotifyTrackSearchResultWrapper>> getSpotifySearchResults(HttpServletRequest request, @RequestBody ArrayList<CommonTrack> tracks) throws ParseException {
+    public Flux<ResponseEntity<SpotifyTrackSearchResultWrapper>> getSpotifySearchResults(HttpServletRequest request, @RequestBody ArrayList<CommonTrack> tracks) {
         HttpSession session = request.getSession();
 
         Optional<SpotifyTokens> tokensOptional = this.spotifyTokenService.findOptional(session.getId());
@@ -104,12 +103,11 @@ public class SpotifyController {
         if (tokensOptional.isPresent()) {
             SpotifyTokens tokens = tokensOptional.get();
 
-            Mono<SpotifyTrackSearchResultWrapper> response = spotifyWebClient.getSpotifySearch(tokens, tracks);
+            Flux<SpotifyTrackSearchResultWrapper> response = spotifyWebClient.getSpotifySearch(tokens, tracks);
 
-            return response.map(
-                    ResponseEntity::ok).defaultIfEmpty(ResponseEntity.badRequest().build());
+            return Flux.from(response).map(ResponseEntity::ok).defaultIfEmpty(ResponseEntity.badRequest().build()).log();
         }
 
-        return Mono.just(ResponseEntity.internalServerError().build());
+        return Flux.just(ResponseEntity.internalServerError().build());
     }
 }
