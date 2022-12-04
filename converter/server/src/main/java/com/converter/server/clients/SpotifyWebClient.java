@@ -2,15 +2,16 @@ package com.converter.server.clients;
 
 import com.converter.server.constants.SpotifyAPIConstants;
 import com.converter.server.constants.SpotifyApplicationConstants;
+import com.converter.server.converters.SpotifyConverter;
 import com.converter.server.entities.common.CommonTrack;
-import com.converter.server.entities.spotify.SpotifyPlaylist;
-import com.converter.server.entities.spotify.SpotifyPlaylists;
-import com.converter.server.entities.spotify.SpotifyTrackSearchResultWrapper;
-import com.converter.server.entities.spotify.SpotifyTracks;
+import com.converter.server.entities.spotify.*;
+import com.converter.server.errors.SpotifyError;
 import com.converter.server.exceptions.SpotifyResponseException;
 import com.converter.server.search.SpotifySearch;
 import com.converter.server.services.ClientIDService;
 import com.converter.server.tokens.SpotifyTokens;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,19 +19,24 @@ import org.springframework.core.NestedRuntimeException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.servlet.function.ServerResponse;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class SpotifyWebClient {
@@ -153,7 +159,7 @@ public class SpotifyWebClient {
         return optionalSpotifyPlaylist;
     }
 
-    public Optional<SpotifyTracks> getPlaylistTracks(SpotifyTokens tokens, String playlistID, int limit, int offset) {
+    public Mono<ServerResponse> getPlaylistTracks(SpotifyTokens tokens, String playlistID, int limit, int offset) {
         URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_api_base)
                 .path("/playlists")
                 .path("/" + playlistID)
@@ -162,31 +168,23 @@ public class SpotifyWebClient {
                 .queryParam("offset", offset)
                 .build().toUri();
 
+        SpotifyConverter converter = new SpotifyConverter();
 
-        Optional<SpotifyTracks> optionalSpotifyPlaylist;
-        try {
+        logger.info(String.format("Started - Spotify Playlist Get Tracks Request - playlistId: %s", playlistID));
+        return client.get()
+                .uri(uri)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header(HttpHeaders.AUTHORIZATION, tokens.toBearerTokenString())
+                .retrieve()
+                .onStatus(HttpStatus::is4xxClientError, this::handleErrors)
+                .onStatus(HttpStatus::is5xxServerError, this::handleErrors)
+                .bodyToMono(SpotifyTracks.class)
+                .map(spotifyTracks -> ServerResponse.ok().body(converter.toCommonTracks(spotifyTracks.getItems().stream().map(SpotifyTrackWrapper::getTrack).collect(Collectors.toList()))))
+                .onErrorResume(SpotifyResponseException.class, error -> error.getError() == null ?
+                        Mono.just(ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON).body(error.getMessage())) :
+                        Mono.just(ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON).body(error.getError().getError().getMessage())))
+                .onErrorReturn(ServerResponse.notFound().build());
 
-            SpotifyTracks playlist = client.get()
-                    .uri(uri)
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .header(HttpHeaders.AUTHORIZATION, tokens.toBearerTokenString())
-                    .retrieve()
-                    .onStatus(HttpStatus::is4xxClientError, clientResponse -> clientResponse.bodyToMono(String.class).map(SpotifyResponseException::new))
-                    .onStatus(HttpStatus::is5xxServerError, clientResponse -> clientResponse.bodyToMono(String.class).map(SpotifyResponseException::new))
-                    .bodyToMono(SpotifyTracks.class)
-                    .block();
-
-            if (playlist != null) {
-                optionalSpotifyPlaylist = Optional.of(playlist);
-            } else {
-                optionalSpotifyPlaylist = Optional.empty();
-            }
-        } catch (NestedRuntimeException exception) {
-            logger.warn(String.format("Failed - Get Spotify User Playlist Tracks - %s", exception.getMessage()));
-            optionalSpotifyPlaylist = Optional.empty();
-        }
-        logger.info("Success - Get Spotify User Playlist Tracks");
-        return optionalSpotifyPlaylist;
     }
 
     public boolean refreshSpotifyTokens(String sessionID, SpotifyTokens tokens) {
@@ -243,5 +241,21 @@ public class SpotifyWebClient {
                 .retrieve()
                 .bodyToMono(SpotifyTrackSearchResultWrapper.class)
                 .log();
+    }
+
+    private Mono<Throwable> handleErrors(ClientResponse response) {
+        return response.bodyToMono(String.class).flatMap(body -> {
+            SpotifyResponseException exception = new SpotifyResponseException(body);
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                SpotifyError error = mapper.readValue(body, SpotifyError.class);
+                exception.setError(error);
+                logger.warn(String.format("Failed - Spotify Playlist Get Tracks - %d - %s", error.getError().getStatus(), error.getError().getMessage()));
+                return Mono.error(exception);
+            } catch (JsonProcessingException e) {
+                logger.warn("Failed - Spotify Playlist Get Tracks -  " + exception.getMessage());
+                return Mono.error(exception);
+            }
+        });
     }
 }
