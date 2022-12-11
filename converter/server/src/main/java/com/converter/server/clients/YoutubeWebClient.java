@@ -59,7 +59,7 @@ public class YoutubeWebClient {
         return result;
     }
 
-    public Flux<String> getSearchResults(ArrayList<CommonTrack> tracks, int limit) {
+    public Flux<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>> getSearchResults(ArrayList<CommonTrack> tracks, int limit) {
         if (limit <= 0 || limit > 50) {
             limit = 10;
         }
@@ -69,17 +69,19 @@ public class YoutubeWebClient {
                 .flatMapSequential(track -> getSearchResult(track, finalLimit));
     }
 
-    public Mono<String> getSearchResult(CommonTrack track, int limit) {
+    public Mono<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>> getSearchResult(CommonTrack track, int limit) {
         YoutubeSearch youtubeSearch = new YoutubeSearch(track);
         youtubeSearch.setLimit(limit);
         logger.info("Search - Youtube Track Search - " + track.getUnstructuredFullName());
 
 
+        var typeRef = new ParameterizedTypeReference<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>>() {};
+
         return client
                 .get()
                 .uri(youtubeSearch.getSearchString())
                 .retrieve()
-                .bodyToMono(String.class)
+                .bodyToMono(typeRef)
                 .retryWhen(Retry.max(0))
                 .log();
     }

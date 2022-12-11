@@ -19,7 +19,6 @@ import org.springframework.core.NestedRuntimeException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -34,7 +33,6 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -90,41 +88,24 @@ public class SpotifyWebClient {
         return optionalSpotifyTokens;
     }
 
-    public Optional<SpotifyPlaylists> getUserPlaylists(SpotifyTokens tokens, int limit, int offset) {
-        if (limit <= 0 || limit > 50) {
-            limit = 10;
-        }
-
+    public Mono<ServerResponse> getUserPlaylists(SpotifyTokens tokens, int limit, int offset) {
         URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_api_base)
                 .path(SpotifyAPIConstants.current_user_playlist_path)
                 .queryParam("limit", limit)
                 .queryParam("offset", offset)
                 .build().toUri();
 
-        Optional<SpotifyPlaylists> optionalSpotifyPlaylists;
-
-        try {
-            SpotifyPlaylists playlists = client.get()
-                    .uri(uri)
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .header(HttpHeaders.AUTHORIZATION, tokens.toBearerTokenString())
-                    .retrieve()
-                    .onStatus(HttpStatus::is4xxClientError, clientResponse -> clientResponse.bodyToMono(String.class).map(SpotifyResponseException::new))
-                    .onStatus(HttpStatus::is5xxServerError, clientResponse -> clientResponse.bodyToMono(String.class).map(SpotifyResponseException::new))
-                    .bodyToMono(SpotifyPlaylists.class)
-                    .block();
-
-            if (playlists != null) {
-                optionalSpotifyPlaylists = Optional.of(playlists);
-            } else {
-                optionalSpotifyPlaylists = Optional.empty();
-            }
-        } catch (NestedRuntimeException exception) {
-            logger.warn(String.format("Failed - Get Spotify User Playlists - %s", exception.getMessage()));
-            optionalSpotifyPlaylists = Optional.empty();
-        }
-        logger.info("Success - Get Spotify User Playlists");
-        return optionalSpotifyPlaylists;
+        logger.info("Started - Get Spotify User Playlists");
+        return client.get()
+                .uri(uri)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header(HttpHeaders.AUTHORIZATION, tokens.toBearerTokenString())
+                .retrieve()
+                .onStatus(HttpStatus::is4xxClientError, this::handleErrors)
+                .onStatus(HttpStatus::is5xxServerError, this::handleErrors)
+                .bodyToMono(SpotifyPlaylists.class)
+                .map(playlists -> ServerResponse.ok().body(playlists.getItems()))
+                .onErrorReturn(ServerResponse.badRequest().build());
     }
 
     public Optional<SpotifyPlaylist> getUserPlaylist(SpotifyTokens tokens, String playlistID) {
@@ -184,7 +165,6 @@ public class SpotifyWebClient {
                         Mono.just(ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON).body(error.getMessage())) :
                         Mono.just(ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON).body(error.getError().getError().getMessage())))
                 .onErrorReturn(ServerResponse.notFound().build());
-
     }
 
     public boolean refreshSpotifyTokens(String sessionID, SpotifyTokens tokens) {
@@ -224,7 +204,6 @@ public class SpotifyWebClient {
     }
 
     public Flux<SpotifyTrackSearchResultWrapper> getSpotifySearch(SpotifyTokens tokens, ArrayList<CommonTrack> tracksToSearch) {
-
 
         return Flux.fromIterable(tracksToSearch)
                 .flatMapSequential(track -> getSearchResult(track, tokens));

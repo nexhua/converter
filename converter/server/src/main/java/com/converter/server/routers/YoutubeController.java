@@ -1,8 +1,11 @@
-package com.converter.server.controllers;
+package com.converter.server.routers;
 
 import com.converter.server.clients.YoutubeWebClient;
 import com.converter.server.converters.YoutubeConverter;
 import com.converter.server.entities.common.CommonTrack;
+import com.converter.server.entities.youtube.YoutubePlaylistItemSnippet;
+import com.converter.server.entities.youtube.YoutubeResult;
+import com.converter.server.entities.youtube.YoutubeVideoResultBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,11 +40,11 @@ public class YoutubeController {
     }
 
     @GetMapping("/search")
-    public Mono<ResponseEntity<List<String>>> getYoutubeSearchResults(HttpServletRequest request, @RequestBody ArrayList<CommonTrack> tracks, @RequestParam int limit) {
+    public Mono<ResponseEntity<List<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>>>> getYoutubeSearchResults(HttpServletRequest request, @RequestBody ArrayList<CommonTrack> tracks, @RequestParam int limit) {
 
-        Flux<String> response = youtubeWebClient.getSearchResults(tracks, limit);
+        Flux<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>> response = youtubeWebClient.getSearchResults(tracks, limit);
 
-        Mono<List<String>> result = response.collectList();
+        Mono<List<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>>> result = response.collectList();
 
         return result.map(ResponseEntity::ok).defaultIfEmpty(ResponseEntity.badRequest().build());
     }

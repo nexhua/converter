@@ -1,4 +1,4 @@
-package com.converter.server.controllers;
+package com.converter.server.routers;
 
 import com.converter.server.clients.SpotifyWebClient;
 import com.converter.server.constants.SpotifyAPIConstants;

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 public class YoutubeVideoResultBase<T> extends YoutubeBase implements IConvertible {
 
-    private String id;
+    private YoutubeVideoResourceId id;
 
     private T snippet;
 
@@ -20,11 +20,12 @@ public class YoutubeVideoResultBase<T> extends YoutubeBase implements IConvertib
 
     //region Getters and Setters
 
-    public String getId() {
+
+    public YoutubeVideoResourceId getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(YoutubeVideoResourceId id) {
         this.id = id;
     }
 
