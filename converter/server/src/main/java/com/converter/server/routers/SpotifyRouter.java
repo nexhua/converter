@@ -18,13 +18,13 @@ public class SpotifyRouter {
     @Bean
     public RouterFunction<ServerResponse> spotifyRoutes() {
         return RouterFunctions.route()
-                .GET("/reactive/spotify/playlists/{playlistID}/tracks",
+                .GET("/spotify/playlists/{playlistID}/tracks",
                         RequestPredicates.param("limit", l -> true).and(RequestPredicates.param("offset", o -> true)),
                         spotifyHandler::getSpotifyPlaylistTracks)
-                .GET("/reactive/spotify/playlists",
+                .GET("/spotify/playlists",
                         RequestPredicates.param("limit", limit -> true).and(RequestPredicates.param("offset", offset -> true)),
                         spotifyHandler::getCurrentUserPlaylists)
-                .GET("/reactive/spotify/search", spotifyHandler::getSpotifySearch)
+                .GET("/spotify/search", spotifyHandler::getSpotifySearch)
                 .build();
     }
 }

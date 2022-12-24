@@ -19,6 +19,6 @@ public class AppConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new SpotifyTokenInterceptor(tokenService, spotifyWebClient)).addPathPatterns("/reactive/spotify/**");
+        registry.addInterceptor(new SpotifyTokenInterceptor(tokenService, spotifyWebClient)).addPathPatterns("/spotify/**");
     }
 }

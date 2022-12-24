@@ -74,7 +74,9 @@ public class SpotifyHandler {
             try {
                 ArrayList<CommonTrack> tracks = request.body(typeRef);
 
-                return spotifyWebClient.getSpotifySearch(tokens, tracks).map(result -> ServerResponse.ok().body(result)).defaultIfEmpty(ServerResponse.notFound().build()).blockLast();
+                return spotifyWebClient.getSpotifySearch(tokens, tracks)
+                        .map(result -> ServerResponse.ok().body(result))
+                        .defaultIfEmpty(ServerResponse.notFound().build()).blockLast();
             } catch (ServletException | IOException e) {
                 logger.warn("Failed - Spotify Search - Parse Error - " + e.getMessage());
             }

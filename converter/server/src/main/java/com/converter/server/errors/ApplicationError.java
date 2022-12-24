@@ -1,10 +1,10 @@
 package com.converter.server.errors;
 
-public class SpotifyError {
+public class ApplicationError {
 
     private SpotifyResponseError error;
 
-    public SpotifyError() {
+    public ApplicationError() {
     }
 
     //region Getters and Setters

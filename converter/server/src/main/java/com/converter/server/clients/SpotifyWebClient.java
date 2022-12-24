@@ -5,7 +5,7 @@ import com.converter.server.constants.SpotifyApplicationConstants;
 import com.converter.server.converters.SpotifyConverter;
 import com.converter.server.entities.common.CommonTrack;
 import com.converter.server.entities.spotify.*;
-import com.converter.server.errors.SpotifyError;
+import com.converter.server.errors.ApplicationError;
 import com.converter.server.exceptions.SpotifyResponseException;
 import com.converter.server.search.SpotifySearch;
 import com.converter.server.services.ClientIDService;
@@ -227,7 +227,7 @@ public class SpotifyWebClient {
             SpotifyResponseException exception = new SpotifyResponseException(body);
             ObjectMapper mapper = new ObjectMapper();
             try {
-                SpotifyError error = mapper.readValue(body, SpotifyError.class);
+                ApplicationError error = mapper.readValue(body, ApplicationError.class);
                 exception.setError(error);
                 logger.warn(String.format("Failed - Spotify Playlist Get Tracks - %d - %s", error.getError().getStatus(), error.getError().getMessage()));
                 return Mono.error(exception);
