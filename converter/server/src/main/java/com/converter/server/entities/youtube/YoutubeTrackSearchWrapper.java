@@ -1,6 +1,6 @@
 package com.converter.server.entities.youtube;
 
-public class YoutubeTrackSearchWrapper extends YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>> {
+public class YoutubeTrackSearchWrapper extends YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet, YoutubeVideoResourceId>> {
 
 
 

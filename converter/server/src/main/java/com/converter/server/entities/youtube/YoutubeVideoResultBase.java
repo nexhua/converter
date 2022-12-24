@@ -9,9 +9,9 @@ import com.converter.server.interfaces.IConvertible;
 
 import java.util.ArrayList;
 
-public class YoutubeVideoResultBase<T> extends YoutubeBase implements IConvertible {
+public class YoutubeVideoResultBase<T, R> extends YoutubeBase implements IConvertible {
 
-    private YoutubeVideoResourceId id;
+    private R id;
 
     private T snippet;
 
@@ -21,11 +21,11 @@ public class YoutubeVideoResultBase<T> extends YoutubeBase implements IConvertib
     //region Getters and Setters
 
 
-    public YoutubeVideoResourceId getId() {
+    public R getId() {
         return id;
     }
 
-    public void setId(YoutubeVideoResourceId id) {
+    public void setId(R id) {
         this.id = id;
     }
 

@@ -6,6 +6,7 @@ import com.converter.server.converters.YoutubeConverter;
 import com.converter.server.entities.common.CommonTrack;
 import com.converter.server.entities.youtube.YoutubePlaylistItemSnippet;
 import com.converter.server.entities.youtube.YoutubeResult;
+import com.converter.server.entities.youtube.YoutubeVideoResourceId;
 import com.converter.server.entities.youtube.YoutubeVideoResultBase;
 import com.converter.server.search.YoutubeSearch;
 import org.slf4j.Logger;
@@ -41,7 +42,7 @@ public class YoutubeWebClient {
                 .queryParam(YoutubeAPIConstants.key, YoutubeApplicationConstants.getApplicationApiKey())
                 .build().toUri();
 
-        var typeRef = new ParameterizedTypeReference<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>>() {
+        var typeRef = new ParameterizedTypeReference<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet, String>>>() {
         };
 
         YoutubeConverter converter = new YoutubeConverter();
@@ -68,13 +69,13 @@ public class YoutubeWebClient {
                 .defaultIfEmpty(ServerResponse.notFound().build());
     }
 
-    public Mono<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>> getSearchResult(CommonTrack track, int limit) {
+    public Mono<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet, YoutubeVideoResourceId>>> getSearchResult(CommonTrack track, int limit) {
         YoutubeSearch youtubeSearch = new YoutubeSearch(track);
         youtubeSearch.setLimit(limit);
         logger.info("Search - Youtube Track Search - " + track.getUnstructuredFullName());
 
 
-        var typeRef = new ParameterizedTypeReference<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet>>>() {
+        var typeRef = new ParameterizedTypeReference<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet, YoutubeVideoResourceId>>>() {
         };
 
         return client
