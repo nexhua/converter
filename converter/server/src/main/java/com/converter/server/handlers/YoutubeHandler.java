@@ -13,8 +13,8 @@ import org.springframework.web.servlet.function.ServerResponse;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class YoutubeHandler {
@@ -51,6 +51,9 @@ public class YoutubeHandler {
             }
         }
 
-        return client.getSearchResults(tracks, parsedLimit).block();
+        return client.getSearchResults(tracks, parsedLimit)
+                .collect(Collectors.toList())
+                .map(result -> ServerResponse.ok().body(result))
+                .defaultIfEmpty(ServerResponse.notFound().build()).block();
     }
 }

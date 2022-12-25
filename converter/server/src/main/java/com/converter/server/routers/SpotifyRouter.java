@@ -24,7 +24,9 @@ public class SpotifyRouter {
                 .GET("/spotify/playlists",
                         RequestPredicates.param("limit", limit -> true).and(RequestPredicates.param("offset", offset -> true)),
                         spotifyHandler::getCurrentUserPlaylists)
-                .GET("/spotify/search", spotifyHandler::getSpotifySearch)
+                .GET("/spotify/search",
+                        RequestPredicates.param("limit", limit -> true),
+                        spotifyHandler::getSpotifySearch)
                 .build();
     }
 }

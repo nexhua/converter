@@ -7,6 +7,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 public class SpotifySearch extends AbstractPlatformSearch {
 
+    private int limit = 3;
+
     @Override
     public PlatformTypes getTargetPlatform() {
         return PlatformTypes.SPOTIFY;
@@ -19,6 +21,7 @@ public class SpotifySearch extends AbstractPlatformSearch {
                 .path("/search")
                 .queryParam("type", "track")
                 .queryParam("q", this.getParams())
+                .queryParam("limit", this.getLimit())
                 .build()
                 .toUriString();
     }
@@ -41,4 +44,17 @@ public class SpotifySearch extends AbstractPlatformSearch {
     public SpotifySearch(CommonTrack track) {
         super(track);
     }
+
+    //region Getters and Setters
+
+    public int getLimit() {
+        return limit;
+    }
+
+    public void setLimit(int limit) {
+        this.limit = limit;
+    }
+
+
+    //endregion
 }

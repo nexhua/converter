@@ -4,6 +4,8 @@ import com.converter.server.constants.YoutubeAPIConstants;
 import com.converter.server.constants.YoutubeApplicationConstants;
 import com.converter.server.converters.YoutubeConverter;
 import com.converter.server.entities.common.CommonTrack;
+import com.converter.server.entities.search.PlatformSearchResult;
+import com.converter.server.entities.search.PlatformSearchResultWrapper;
 import com.converter.server.entities.youtube.YoutubePlaylistItemSnippet;
 import com.converter.server.entities.youtube.YoutubeResult;
 import com.converter.server.entities.youtube.YoutubeVideoResourceId;
@@ -18,7 +20,6 @@ import org.springframework.web.servlet.function.ServerResponse;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -57,19 +58,16 @@ public class YoutubeWebClient {
                 .onErrorReturn(ServerResponse.notFound().build());
     }
 
-    public Mono<ServerResponse> getSearchResults(ArrayList<CommonTrack> tracks, int limit) {
+    public Flux<PlatformSearchResultWrapper> getSearchResults(ArrayList<CommonTrack> tracks, int limit) {
         if (limit <= 0 || limit > 50) {
             limit = 10;
         }
 
         return Flux.fromIterable(tracks.stream().limit(limit).collect(Collectors.toList()))
-                .flatMapSequential(track -> getSearchResult(track, 5))
-                .collect(Collectors.toList())
-                .map(result -> ServerResponse.ok().body(result))
-                .defaultIfEmpty(ServerResponse.notFound().build());
+                .flatMapSequential(track -> getSearchResult(track, 5));
     }
 
-    public Mono<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet, YoutubeVideoResourceId>>> getSearchResult(CommonTrack track, int limit) {
+    public Mono<PlatformSearchResultWrapper> getSearchResult(CommonTrack track, int limit) {
         YoutubeSearch youtubeSearch = new YoutubeSearch(track);
         youtubeSearch.setLimit(limit);
         logger.info("Search - Youtube Track Search - " + track.getUnstructuredFullName());
@@ -83,7 +81,31 @@ public class YoutubeWebClient {
                 .uri(youtubeSearch.getSearchString())
                 .retrieve()
                 .bodyToMono(typeRef)
-                .retryWhen(Retry.max(0))
+                .map(this::createSearchResult)
                 .log();
+    }
+
+
+    private PlatformSearchResultWrapper createSearchResult(YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet, YoutubeVideoResourceId>> searchResult) {
+        YoutubeConverter converter = new YoutubeConverter();
+        PlatformSearchResultWrapper searchResultWrapper = new PlatformSearchResultWrapper();
+
+        var alternatives = searchResult.getItems().stream().map(
+                track -> {
+                    var newTrack = new YoutubeVideoResultBase<YoutubePlaylistItemSnippet, String>();
+                    newTrack.setSnippet(track.getSnippet());
+                    newTrack.setId(track.getId().getVideoId());
+
+                    CommonTrack commonTrack = converter.toCommonTrack(newTrack);
+
+                    PlatformSearchResult platformSearchResult = new PlatformSearchResult();
+                    platformSearchResult.setPlatformIdentifier(track.getId().getVideoId());
+                    platformSearchResult.setTrack(commonTrack);
+                    return platformSearchResult;
+                }).toList();
+
+        searchResultWrapper.setAlternatives(alternatives);
+        searchResultWrapper.setChosenTrack(0);
+        return searchResultWrapper;
     }
 }

@@ -1,25 +1,25 @@
 package com.converter.server.exceptions;
 
-import com.converter.server.errors.ApplicationError;
+import com.converter.server.errors.SpotifyError;
 
 public class SpotifyResponseException extends RuntimeException {
 
-    private ApplicationError error;
+    private SpotifyError error;
 
     public SpotifyResponseException(String msg) {
         super(msg);
     }
 
-    public SpotifyResponseException(String msg, ApplicationError error) {
+    public SpotifyResponseException(String msg, SpotifyError error) {
         super(msg);
         this.error = error;
     }
 
-    public ApplicationError getError() {
+    public SpotifyError getError() {
         return error;
     }
 
-    public void setError(ApplicationError error) {
+    public void setError(SpotifyError error) {
         this.error = error;
     }
 }

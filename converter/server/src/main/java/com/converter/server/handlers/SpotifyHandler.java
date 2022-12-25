@@ -1,6 +1,7 @@
 package com.converter.server.handlers;
 
 import com.converter.server.clients.SpotifyWebClient;
+import com.converter.server.converters.SpotifyConverter;
 import com.converter.server.entities.common.CommonTrack;
 import com.converter.server.services.SpotifyTokenService;
 import com.converter.server.tokens.SpotifyTokens;
@@ -18,6 +19,7 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class SpotifyHandler {
@@ -74,9 +76,15 @@ public class SpotifyHandler {
             try {
                 ArrayList<CommonTrack> tracks = request.body(typeRef);
 
-                return spotifyWebClient.getSpotifySearch(tokens, tracks)
+                String limit = request.param("limit").orElse("3");
+
+                SpotifyConverter converter = new SpotifyConverter();
+
+                return spotifyWebClient.getSpotifySearch(tokens, tracks, Integer.parseInt(limit, 10))
+                        .collect(Collectors.toList())
                         .map(result -> ServerResponse.ok().body(result))
-                        .defaultIfEmpty(ServerResponse.notFound().build()).blockLast();
+                        .defaultIfEmpty(ServerResponse.notFound().build())
+                        .block();
             } catch (ServletException | IOException e) {
                 logger.warn("Failed - Spotify Search - Parse Error - " + e.getMessage());
             }

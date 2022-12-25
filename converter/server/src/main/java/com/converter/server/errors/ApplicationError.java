@@ -1,20 +1,22 @@
 package com.converter.server.errors;
 
-public class ApplicationError {
+public class ApplicationError extends Throwable {
 
-    private SpotifyResponseError error;
+    String message;
 
-    public ApplicationError() {
+    public ApplicationError(String message) {
+        this.message = message;
     }
 
     //region Getters and Setters
 
-    public SpotifyResponseError getError() {
-        return error;
+    @Override
+    public String getMessage() {
+        return message;
     }
 
-    public void setError(SpotifyResponseError error) {
-        this.error = error;
+    public void setMessage(String message) {
+        this.message = message;
     }
 
 
