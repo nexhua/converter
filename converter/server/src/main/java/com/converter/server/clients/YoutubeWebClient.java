@@ -32,7 +32,7 @@ public class YoutubeWebClient {
 
     private final WebClient client = WebClient.create();
 
-    public Mono<ServerResponse> getYoutubePlaylistItems(String playlistID) {
+    public Mono<ServerResponse> getYoutubePlaylistItems(String playlistID, int limit) {
         logger.info(String.format("Youtube Playlist Get - Playlist: %s", playlistID));
 
         URI uri = UriComponentsBuilder.fromHttpUrl(YoutubeAPIConstants.youtube_api_base)
@@ -41,6 +41,7 @@ public class YoutubeWebClient {
                 .queryParam(YoutubeAPIConstants.part, YoutubeAPIConstants.snippet)
                 .queryParam(YoutubeAPIConstants.playlistId, playlistID)
                 .queryParam(YoutubeAPIConstants.key, YoutubeApplicationConstants.getApplicationApiKey())
+                .queryParam(YoutubeAPIConstants.maxResults, limit)
                 .build().toUri();
 
         var typeRef = new ParameterizedTypeReference<YoutubeResult<YoutubeVideoResultBase<YoutubePlaylistItemSnippet, String>>>() {

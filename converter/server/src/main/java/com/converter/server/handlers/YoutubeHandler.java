@@ -28,8 +28,10 @@ public class YoutubeHandler {
     public ServerResponse getPlaylistTracks(ServerRequest request) {
         String playlistID = request.pathVariable("playlistID");
 
+        String limit = request.param("limit").orElse("3");
+
         if (!playlistID.isBlank()) {
-            return client.getYoutubePlaylistItems(playlistID).block();
+            return client.getYoutubePlaylistItems(playlistID, Integer.parseInt(limit)).block();
         } else {
             return ServerResponse.badRequest().build();
         }

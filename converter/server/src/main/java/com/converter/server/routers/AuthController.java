@@ -49,7 +49,7 @@ public class AuthController {
                 .path(SpotifyAPIConstants.authorize_path)
                 .queryParam(SpotifyAPIConstants.client_id, SpotifyApplicationConstants.getClient_id())
                 .queryParam(SpotifyAPIConstants.response_type, "code")
-                .queryParam(SpotifyAPIConstants.scope, "playlist-read-private playlist-read-collaborative")
+                .queryParam(SpotifyAPIConstants.scope, "playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private")
                 .queryParam(SpotifyAPIConstants.state, state)
                 .queryParam(SpotifyAPIConstants.redirect_uri, SpotifyAPIConstants.app_spotify_redirect_endpoint)
                 .build().toUri();

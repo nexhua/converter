@@ -18,6 +18,7 @@ public class SpotifyRouter {
     @Bean
     public RouterFunction<ServerResponse> spotifyRoutes() {
         return RouterFunctions.route()
+                .GET("/spotify/me", spotifyHandler::getCurrentUser)
                 .GET("/spotify/playlists/{playlistID}/tracks",
                         RequestPredicates.param("limit", l -> true).and(RequestPredicates.param("offset", o -> true)),
                         spotifyHandler::getSpotifyPlaylistTracks)
@@ -27,6 +28,7 @@ public class SpotifyRouter {
                 .GET("/spotify/search",
                         RequestPredicates.param("limit", limit -> true),
                         spotifyHandler::getSpotifySearch)
+                .POST("/spotify/playlists", spotifyHandler::createPlaylist)
                 .build();
     }
 }

@@ -3,6 +3,10 @@ package com.converter.server.handlers;
 import com.converter.server.clients.SpotifyWebClient;
 import com.converter.server.converters.SpotifyConverter;
 import com.converter.server.entities.common.CommonTrack;
+import com.converter.server.entities.spotify.SpotifyPlaylist;
+import com.converter.server.entities.spotify.SpotifyUser;
+import com.converter.server.inputs.CreatePlaylistInput;
+import com.converter.server.inputs.SpotifyPlaylistCreateOptions;
 import com.converter.server.services.SpotifyTokenService;
 import com.converter.server.tokens.SpotifyTokens;
 import org.slf4j.Logger;
@@ -31,6 +35,18 @@ public class SpotifyHandler {
     private SpotifyTokenService spotifyTokenService;
 
     Logger logger = LoggerFactory.getLogger(SpotifyHandler.class);
+
+    public ServerResponse getCurrentUser(ServerRequest request) {
+        HttpSession session = request.session();
+        Optional<SpotifyTokens> optionalSpotifyTokens = this.spotifyTokenService.findOptional(session.getId());
+
+        if (optionalSpotifyTokens.isPresent()) {
+            SpotifyTokens tokens = optionalSpotifyTokens.get();
+
+            return spotifyWebClient.getCurrentUserProfile(tokens).map(user -> ServerResponse.ok().body(user)).block();
+        }
+        return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
 
     public ServerResponse getCurrentUserPlaylists(ServerRequest request) {
         HttpSession session = request.session();
@@ -91,6 +107,41 @@ public class SpotifyHandler {
 
         }
 
+        return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+
+    public ServerResponse createPlaylist(ServerRequest request) {
+        HttpSession session = request.session();
+
+        Optional<SpotifyTokens> optionalSpotifyTokens = this.spotifyTokenService.findOptional(session.getId());
+
+        if (optionalSpotifyTokens.isPresent()) {
+            SpotifyTokens tokens = optionalSpotifyTokens.get();
+
+            var typeRef = new ParameterizedTypeReference<CreatePlaylistInput<SpotifyPlaylistCreateOptions>>() {
+            };
+
+            CreatePlaylistInput<SpotifyPlaylistCreateOptions> input = null;
+
+            try {
+                input = request.body(typeRef);
+
+                System.out.println(input);
+            } catch (IOException | ServletException e) {
+                return ServerResponse.badRequest().build();
+            }
+
+            SpotifyUser user = spotifyWebClient.getCurrentUserProfile(tokens).block();
+
+            if (user != null) {
+
+                SpotifyPlaylist playlist = spotifyWebClient.createPlaylist(tokens, input, user).block();
+
+                if (playlist != null) {
+                    return spotifyWebClient.addTracksToPlaylist(tokens, playlist, input).block();
+                }
+            }
+        }
         return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 }

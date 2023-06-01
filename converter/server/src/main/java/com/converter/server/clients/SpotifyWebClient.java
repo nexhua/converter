@@ -9,6 +9,9 @@ import com.converter.server.entities.search.PlatformSearchResultWrapper;
 import com.converter.server.entities.spotify.*;
 import com.converter.server.errors.SpotifyError;
 import com.converter.server.exceptions.SpotifyResponseException;
+import com.converter.server.inputs.CreatePlaylistInput;
+import com.converter.server.inputs.SpotifyPlaylistCreateOptions;
+import com.converter.server.inputs.spotify.PlaylistAddTracks;
 import com.converter.server.search.SpotifySearch;
 import com.converter.server.services.ClientIDService;
 import com.converter.server.tokens.SpotifyTokens;
@@ -33,7 +36,6 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -88,6 +90,20 @@ public class SpotifyWebClient {
         }
         logger.info("Success - Get Spotify Tokens");
         return optionalSpotifyTokens;
+    }
+
+    public Mono<SpotifyUser> getCurrentUserProfile(SpotifyTokens tokens) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_api_base)
+                .path(SpotifyAPIConstants.current_user_path)
+                .build().toUri();
+
+        logger.info("Started - Get Spotify Current User Profile");
+        return client.get()
+                .uri(uri)
+                .header(HttpHeaders.AUTHORIZATION, tokens.toBearerTokenString())
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .retrieve()
+                .bodyToMono(SpotifyUser.class);
     }
 
     public Mono<ServerResponse> getUserPlaylists(SpotifyTokens tokens, int limit, int offset) {
@@ -194,6 +210,45 @@ public class SpotifyWebClient {
                 .retrieve()
                 .bodyToMono(SpotifyTrackSearchResultWrapper.class)
                 .map(this::createSearchResult)
+                .log();
+    }
+
+
+    public Mono<SpotifyPlaylist> createPlaylist(SpotifyTokens tokens, CreatePlaylistInput<SpotifyPlaylistCreateOptions> input, SpotifyUser user) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_api_base)
+                .path(SpotifyAPIConstants.current_user_create_playlist_path)
+                .buildAndExpand(user.getId()).toUri();
+
+        logger.info(String.format("Spotify - Create Playlist User - %s Playlist - %s", user.getId(), input.getOptions().getName()));
+
+        return client.post()
+                .uri(uri)
+                .header(HttpHeaders.AUTHORIZATION, tokens.toBearerTokenString())
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .body(BodyInserters.fromValue(input.getOptions()))
+                .retrieve()
+                .bodyToMono(SpotifyPlaylist.class)
+                .doOnError(err -> System.out.println(err.getMessage()))
+                .log();
+    }
+
+    public Mono<ServerResponse> addTracksToPlaylist(SpotifyTokens tokens, SpotifyPlaylist playlist, CreatePlaylistInput<SpotifyPlaylistCreateOptions> input) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(SpotifyAPIConstants.spotify_api_base)
+                .path(SpotifyAPIConstants.playlist_add_tracks)
+                .buildAndExpand(playlist.getId()).toUri();
+
+        logger.info(String.format("Spotify - Create Playlist Playlist - %s - Track Count - %d", input.getOptions().getName(), input.getTracks().size()));
+
+        PlaylistAddTracks body = new PlaylistAddTracks(input);
+
+        return client.post()
+                .uri(uri)
+                .header(HttpHeaders.AUTHORIZATION, tokens.toBearerTokenString())
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .body(BodyInserters.fromValue(body))
+                .retrieve()
+                .bodyToMono(String.class)
+                .map(response -> ServerResponse.ok().body(response))
                 .log();
     }
 

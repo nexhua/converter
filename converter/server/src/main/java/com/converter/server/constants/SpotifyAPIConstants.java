@@ -33,7 +33,12 @@ public class SpotifyAPIConstants {
 
     public static final String api_token_path = "/api/token";
 
+    public static final String current_user_path = "/me";
     public static final String current_user_playlist_path = "/me/playlists";
+
+    public static final String current_user_create_playlist_path = "/users/{userID}/playlists";
+
+    public static final String playlist_add_tracks = "/playlists/{playlistID}/tracks";
 
     //endregion
 
